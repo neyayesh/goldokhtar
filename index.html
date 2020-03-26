@@ -1,0 +1,24 @@
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body onload="myLoad()">
+<script type="text/javascript">
+    function myLoad() {
+        myVar = setInterval(checkVersion, 3000);
+    }
+
+    function checkVersion() {
+        fetch('http://www.azinvista.com/ver', {})
+            .then((response) => {
+                return response.json();
+            })
+            .then((data) => {
+                document.getElementById("img").src = "http://res.cloudinary.com/dr4eclxx1/image/upload/v" + data + "/niayesh_e_man.jpg";
+            });
+    }
+</script>
+<img id="img" style="width: 100%;height: 100%;" alt="not found"/>
+</body>
+
+</html>
