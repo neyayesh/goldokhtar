@@ -1,26 +1,34 @@
 <html>
-<head>
+<head><meta http-equiv="Content-Type" content="text/html; charset=utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
     <title>پایش نیایش</title>
 </head>
 <body onload="myLoad()">
+
 <script type="text/javascript">
     function myLoad() {
-        myVar = setInterval(checkVersion, 3000);
+        myVar = setInterval(checkVersion, 500);
     }
-
+    lastMotion=0;
     function checkVersion() {
-        fetch('http://www.azinvista.com/ver', {})
+        fetch('https://www.azinvista.com/ver', {})
             .then((response) => {
                 return response.json();
             })
             .then((data) => {
-                document.getElementById("img").src = "http://res.cloudinary.com/dr4eclxx1/image/upload/v" + data + "/niayesh_e_man.jpg";
+                
+                document.getElementById("img").src = "https://res.cloudinary.com/dr4eclxx1/image/upload/v" + data.version + "/niayesh_e_man.jpg";
+                let motion=parseInt(data.motion);
+                let differentMotion=(motion===0 || (motion>0 && motion>lastMotion));
+                if(motion!==0 && Date.now()-motion<300000 && differentMotion){
+                   window.navigator.vibrate(200,100,200);
+                }
+                lastMotion=parseInt(data.motion);
             });
     }
 </script>
-<img id="img" style="width: 100%;height: 100%;" alt="not found"/>
+<img id="img" style="width: 100%;" alt="not found"/>
 </body>
 
 </html>
