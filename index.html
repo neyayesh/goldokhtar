@@ -88,7 +88,7 @@
                 return response.json();
             })
             .then((data) => {
-                document.getElementById("img").src = "https://res.cloudinary.com/dr4eclxx1/image/upload/v" + data.version + "/ninipaya/"+hash+".jpg";
+                document.getElementById("img").src = "https://res.cloudinary.com/dr4eclxx1/image/upload/v" + data.version + "/ninipaya"+hash+".jpg";
                 let motion=parseInt(data.motion);
                 let differentMotion=(motion===0 || (motion>0 && motion>lastMotion));
                 if(motion!==0 && Date.now()-motion<300000 && differentMotion){
