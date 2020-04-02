@@ -53,8 +53,10 @@
 				checkAndStart(val,true);
 			}
 		});
-		if(getHash()!==null){
-			checkAndStart(getHash(),false);
+		var hash=getHash();
+		if(hash!==null){
+			$("#txtHash").val(hash);
+			checkAndStart(hash,false);
 		}
 	});
 	function checkAndStart(hash,msg){
