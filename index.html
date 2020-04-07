@@ -30,6 +30,16 @@
 			margin-top:70px;
 			border:solid 3px #2a88ad;
 		}
+		#lblTime{
+			position:fixed;
+			bottom:10px;
+			left:10px;
+			padding:5px;
+			text-alig:center;
+			border-radius:5px;
+			background-color:#1b6396;
+			color:white;
+		}
 	</style>
 </head>
 <body>
@@ -42,23 +52,43 @@
 	<input id="txtHash" placeholder="شناسه دلبند شما"></input>
 	<button id="btnConfig">تایید</button>
 </div>
+<img id="img" alt="مشکل در دریافت تصویر"/>
+<div id="lblTime">منتظر بمانید</div>
 
-<img id="img" alt="not found"/>
 <script type="text/javascript">
 	myVar=null;
 	lastMotion=0;
+	lastLoadTime=Date.now();
+	currentImageTime=Date.now();
+	timeDiff=0;
     $(document).ready(function(){
+		$("#img").bind('load', function() {
+			lastLoadTime=currentImageTime;
+		});
 	    $("#btnConfig").click(function(e){
 			var val=$("#txtHash").val().trim();
 			if(val!==""){
 				checkAndStart(val,true);
 			}
 		});
-		var hash=getHash();
-		if(hash!==null){
-			$("#txtHash").val(getHash())
-			checkAndStart(hash,false);
-		}
+		
+		//sync time
+		 let stamp= Date.now();
+		 fetch('https://www.azinvista.com/time', {})
+		.then((response) => {
+			return response.json();
+		})
+		.then((data) => {
+			let ttl=(Date.now()-stamp)/2;
+			data-=ttl;
+			timeDiff=data-stamp;
+			var hash=getHash();
+			if(hash!==null){
+				$("#txtHash").val(getHash())
+				checkAndStart(hash,false);
+			}
+		});
+
 	});
 	function checkAndStart(hash,msg){
 		if(myVar!==null){
@@ -80,8 +110,24 @@
             });
 		
 	}
+	
+	function getPrettyTime(before){
+		if(before>86400){
+			return Math.round(before/86400)+" روز پیش";
+		}
+		if(before>3600){
+			return Math.round(before/3600)+" ساعت پیش";
+		}		
+		if(before>60){
+			return Math.round(before/60)+" دقیقه پیش";
+		}		
+		return Math.round(before)+" ثانیه پیش";
+	}
     
     function checkVersion() {
+	    let before= getServerTime()-lastLoadTime;
+		before=before/1000;
+		$("#lblTime").html(getPrettyTime(before));
 	    if(getHash()===null){
 			return;
 		}
@@ -91,6 +137,7 @@
                 return response.json();
             })
             .then((data) => {
+				currentImageTime=data.stamp;
                 document.getElementById("img").src = "https://res.cloudinary.com/dr4eclxx1/image/upload/v" + data.version + "/ninipaya"+hash+".jpg";
                 let motion=parseInt(data.motion);
                 let differentMotion=(motion===0 || (motion>0 && motion>lastMotion));
@@ -108,6 +155,9 @@
 	}
 	function setHash(hash){
 		localStorage.setItem("hash",hash);
+	}
+	function getServerTime(){
+	   return Date.now()+timeDiff;
 	}
 </script>
 </body>
