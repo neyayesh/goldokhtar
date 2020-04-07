@@ -2,6 +2,7 @@
 <head><meta http-equiv="Content-Type" content="text/html; charset=utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
+	<link rel="icon" href="favicon.png">
     <title>نی نی پایا</title>
 	<style>
 		@font-face {
@@ -58,8 +59,8 @@
 <script type="text/javascript">
 	myVar=null;
 	lastMotion=0;
-	lastLoadTime=Date.now();
-	currentImageTime=Date.now();
+	lastLoadTime=0;
+	currentImageTime=0;
 	timeDiff=0;
     $(document).ready(function(){
 		$("#img").bind('load', function() {
@@ -125,9 +126,11 @@
 	}
     
     function checkVersion() {
-	    let before= getServerTime()-lastLoadTime;
-		before=before/1000;
-		$("#lblTime").html(getPrettyTime(before));
+		if(lastLoadTime>0){
+			let before= getServerTime()-lastLoadTime;
+			before=before/1000;
+			$("#lblTime").html(getPrettyTime(before));
+		}
 	    if(getHash()===null){
 			return;
 		}
