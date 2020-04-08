@@ -129,7 +129,7 @@
 				  success: function (dd) {
 				    $("#btnAccess").removeClass("hidden");
 					$("#btnAccess").attr("href","https://"+data+":8974");
-					myVar = setInterval(onlineMode, 200);
+					myVar = setInterval(onlineMode, 500);
 				  },
 				  error: function (xhr, ajaxOptions, thrownError) {
 				  $("#btnAccess").addClass("hidden");
