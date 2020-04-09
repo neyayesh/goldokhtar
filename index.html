@@ -76,8 +76,10 @@
 	checkingLocalMode=false;
 	localMode=false;
 	socket=null; 
+	loadingImage=false;
     $(document).ready(function(){
 		$("#img").bind('load', function() {
+			loadingImage=false;
 			lastLoadTime=currentImageTime;
 		});
 	    $("#btnConfig").click(function(e){
@@ -130,7 +132,10 @@
 					window.navigator.vibrate(200,100,200);
 				}
 				else{
-					$("#img").attr("src","data:image/jpeg;charset=utf-8;base64, "+event.data);
+				     if(!loadingImage){
+						loadingImage=true;
+						$("#img").attr("src","data:image/jpeg;charset=utf-8;base64, "+event.data);
+					}
 				}
 				$("#lblTime").html("ارتباط درون شبکه ای");
 			});
