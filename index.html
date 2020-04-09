@@ -73,7 +73,9 @@
 	lastLoadTime=0;
 	currentImageTime=0;
 	timeDiff=0;
+	checkingLocalMode=false;
 	localMode=false;
+	socket=null; 
     $(document).ready(function(){
 		$("#img").bind('load', function() {
 			lastLoadTime=currentImageTime;
@@ -105,33 +107,50 @@
 	});
 	
 	function tryLocalMode(){
-	     if(getIp()!==null){
-			const socket = new WebSocket('wss://'+getIp()+':8080/image');
+	     if(getIp()!==null && !localMode && !checkingLocalMode){
+			checkingLocalMode=true;
+			if (socket!==null && socket.readyState === WebSocket.OPEN) {
+				socket.close();
+			}
+			socket = new WebSocket('wss://'+getIp()+':8080/image');
 			socket.addEventListener('open', function (event) {
 				localMode=true;
+				if(myVar!==null){
+					clearInterval(myVar);
+				}
 				socket.send('Hello Server!');
+				$("#lblTime").html("ارتباط درون شبکه ای");
 			});
 			socket.addEventListener('message', function (event) {
 				localMode=true;
-				$("#img").attr("src","data:image/jpeg;charset=utf-8;base64, "+event.data);
+				if(myVar!==null){
+					clearInterval(myVar);
+				}
+				if(event.data==="motion"){
+					window.navigator.vibrate(200,100,200);
+				}
+				else{
+					$("#img").attr("src","data:image/jpeg;charset=utf-8;base64, "+event.data);
+				}
+				$("#lblTime").html("ارتباط درون شبکه ای");
 			});
 			socket.addEventListener('error', function (event) {
+				checkingLocalMode=false;
+				if(localMode){
+					if(myVar!==null){
+						clearInterval(myVar);
+					}
+					myVar = setInterval(checkVersion, 500);
+				}
 				localMode=false;
-				tryLocalMode();
 			});
-			
-			const detectionSocket = new WebSocket('wss://'+getIp()+':8080/detection');
-			detectionSocket.addEventListener('open', function (event) {
-				localMode=true;
-				detectionSocket.send('Hello Server!');
-			});
-			detectionSocket.addEventListener('message', function (event) {
-				localMode=true;
-				window.navigator.vibrate(200,100,200);
-			});
-			detectionSocket.addEventListener('error', function (event) {
+			socket.addEventListener('close', function (event) {
+				checkingLocalMode=false;
 				localMode=false;
-				tryLocalMode();
+				if(myVar!==null){
+					clearInterval(myVar);
+				}
+				myVar = setInterval(checkVersion, 500);
 			});
 		 }
 	}
@@ -154,7 +173,6 @@
 				setHash(hash);
 				setIp(data);
 				tryLocalMode();
-				myVar = setInterval(checkVersion, 500);
             });
 		
 	}
@@ -176,6 +194,7 @@
 			$("#lblTime").html("ارتباط درون شبکه ای");
 		}
 		else{
+			tryLocalMode();
 			if(lastLoadTime>0){
 				let before= getServerTime()-lastLoadTime;
 				before=before/1000;
