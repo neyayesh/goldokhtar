@@ -153,8 +153,7 @@
 		return Math.round(before)+" ثانیه پیش";
 	}
     function onlineMode() {
-		$("#img").attr("src","https://"+getIp()+":8974/raw?a="+getServerTime());
-/*		jQuery.ajax({
+		jQuery.ajax({
 		  type: "GET",
 		  url: "https://"+getIp()+":8974/image",
 		  success: function (data) {
@@ -174,7 +173,7 @@
 		  error: function (xhr, ajaxOptions, thrownError) {
 		  	
 		  }
-		});*/	
+		});	
     }
     function checkVersion() {
 		if(lastLoadTime>0){
