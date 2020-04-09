@@ -63,11 +63,8 @@
 <div style="position:fixed;top:5px;left:5px;height:60px;">
 	<input id="txtHash" placeholder="شناسه دلبند شما"></input>
 	<button id="btnConfig">تایید</button>
-	<a id="btnAccess" class="hidden" target="_blank">
-		<div class="btn">اجازه دسترسی</div>
-	</a>
 </div>
-<img id="img" alt="مشکل در دریافت تصویر"/>
+<img id="img" alt="منتظر دریافت تصویر"/>
 <div id="lblTime">منتظر بمانید</div>
 
 <script type="text/javascript">
@@ -76,6 +73,7 @@
 	lastLoadTime=0;
 	currentImageTime=0;
 	timeDiff=0;
+	localMode=false;
     $(document).ready(function(){
 		$("#img").bind('load', function() {
 			lastLoadTime=currentImageTime;
@@ -106,6 +104,38 @@
 
 	});
 	
+	function tryLocalMode(){
+	     if(getIp()!==null){
+			const socket = new WebSocket('wss://'+getIp()+':8080/image');
+			socket.addEventListener('open', function (event) {
+				localMode=true;
+				socket.send('Hello Server!');
+			});
+			socket.addEventListener('message', function (event) {
+				localMode=true;
+				$("#img").attr("src","data:image/jpeg;charset=utf-8;base64, "+event.data);
+			});
+			socket.addEventListener('error', function (event) {
+				localMode=false;
+				tryLocalMode();
+			});
+			
+			const detectionSocket = new WebSocket('wss://'+getIp()+':8080/detection');
+			detectionSocket.addEventListener('open', function (event) {
+				localMode=true;
+				detectionSocket.send('Hello Server!');
+			});
+			detectionSocket.addEventListener('message', function (event) {
+				localMode=true;
+				window.navigator.vibrate(200,100,200);
+			});
+			detectionSocket.addEventListener('error', function (event) {
+				localMode=false;
+				tryLocalMode();
+			});
+		 }
+	}
+	
 	function checkAndStart(hash,msg){
 		if(myVar!==null){
 			clearInterval(myVar);
@@ -123,19 +153,8 @@
 				}
 				setHash(hash);
 				setIp(data);
-				jQuery.ajax({
-				  type: "GET",
-				  url: "https://"+data+":8974/image",
-				  success: function (dd) {
-				    $("#btnAccess").removeClass("hidden");
-					$("#btnAccess").attr("href","https://"+data+":8974");
-					myVar = setInterval(onlineMode, 500);
-				  },
-				  error: function (xhr, ajaxOptions, thrownError) {
-				  $("#btnAccess").addClass("hidden");
-					myVar = setInterval(checkVersion, 500);
-				  }
-				});	
+				tryLocalMode();
+				myVar = setInterval(checkVersion, 500);
             });
 		
 	}
@@ -152,53 +171,35 @@
 		}		
 		return Math.round(before)+" ثانیه پیش";
 	}
-    function onlineMode() {
-		jQuery.ajax({
-		  type: "GET",
-		  url: "https://"+getIp()+":8974/image",
-		  success: function (data) {
-		    $("#lblTime").html("آنلاین");
-			$("#img").attr("src","data:image/jpeg;charset=utf-8;base64, "+data);
-		  },
-		  error: function (xhr, ajaxOptions, thrownError) {
-		  	$("#lblTime").html("آفلاین");
-		  }
-		});	
-		jQuery.ajax({
-		  type: "GET",
-		  url: "https://"+getIp()+":8974/notif",
-		  success: function (data) {
-		    window.navigator.vibrate(200,100,200);
-		  },
-		  error: function (xhr, ajaxOptions, thrownError) {
-		  	
-		  }
-		});	
-    }
     function checkVersion() {
-		if(lastLoadTime>0){
-			let before= getServerTime()-lastLoadTime;
-			before=before/1000;
-			$("#lblTime").html(getPrettyTime(before));
+		if(localMode){
+			$("#lblTime").html("ارتباط درون شبکه ای");
 		}
-	    if(getHash()===null){
-			return;
+		else{
+			if(lastLoadTime>0){
+				let before= getServerTime()-lastLoadTime;
+				before=before/1000;
+				$("#lblTime").html(getPrettyTime(before));
+			}
+			if(getHash()===null){
+				return;
+			}
+			var hash=getHash();
+			fetch('https://www.azinvista.com/get_version?id='+hash, {})
+				.then((response) => {
+					return response.json();
+				})
+				.then((data) => {
+					currentImageTime=data.stamp;
+					document.getElementById("img").src = "https://res.cloudinary.com/dr4eclxx1/image/upload/v" + data.version + "/ninipaya"+hash+".jpg";
+					let motion=parseInt(data.motion);
+					let differentMotion=(motion===0 || (motion>0 && motion>lastMotion));
+					if(motion!==0 && Date.now()-motion<300000 && differentMotion){
+					   window.navigator.vibrate(200,100,200);
+					}
+					lastMotion=parseInt(data.motion);
+				});
 		}
-		var hash=getHash();
-        fetch('https://www.azinvista.com/get_version?id='+hash, {})
-            .then((response) => {
-                return response.json();
-            })
-            .then((data) => {
-				currentImageTime=data.stamp;
-                document.getElementById("img").src = "https://res.cloudinary.com/dr4eclxx1/image/upload/v" + data.version + "/ninipaya"+hash+".jpg";
-                let motion=parseInt(data.motion);
-                let differentMotion=(motion===0 || (motion>0 && motion>lastMotion));
-                if(motion!==0 && Date.now()-motion<300000 && differentMotion){
-                   window.navigator.vibrate(200,100,200);
-                }
-                lastMotion=parseInt(data.motion);
-            });
     }
 	function getHash(){
 	   if(localStorage.getItem("hash")===null || localStorage.getItem("hash")===undefined){
