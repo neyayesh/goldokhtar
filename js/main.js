@@ -21,6 +21,8 @@ $(document).ready(function(){
    });
 
     var mainView = app.views.create('.view-main');
+    $("#chkNet")[0].checked=localStorage.getItem("local_net")== 'true';
+    $("#chkVibrate")[0].checked=localStorage.getItem("vibrate")== 'true';
     $("#img").bind('load', function() {
         loadingImage=false;
         lastLoadTime=currentImageTime;
@@ -29,14 +31,25 @@ $(document).ready(function(){
         var val=$("#txtHash").val().trim();
         if(val!==""){
                 checkAndStart(val,true);
+                app.panel.get('.panel-right-1').close();
+                localStorage.setItem("local_net",$("#chkNet")[0].checked);
+                localStorage.setItem("vibrate",$("#chkVibrate")[0].checked);
         }
+        else{
+            app.dialog.alert("لطفا شناسه کودک را وارد کنید");
+        }
+        
     });
     var stamp= Date.now();
+    app.preloader.show("blue");
+    $("#lblTime").html("در حال همگام سازی زمان");
     fetch('https://www.azinvista.com/time', {})
    .then((response) => {
            return response.json();
    })
    .then((data) => {
+            $("#lblTime").html("");
+            app.preloader.hide();
            var ttl=(Date.now()-stamp)/2;
            data-=ttl;
            timeDiff=data-stamp;
@@ -45,17 +58,23 @@ $(document).ready(function(){
                    $("#txtHash").val(getHash())
                    checkAndStart(hash,false);
            }
-   });
+   }).catch(function() {
+        app.preloader.hide();
+    });
 
     });
     
 	
 function checkAndStart(hash,msg){
+    app.preloader.show("blue");
+    $("#lblTime").html("در حال کنترل شناسه");
     fetch('https://www.azinvista.com/check_hash?id='+hash, {})
     .then((response) => {
         return response.json();
     })
     .then((data) => {
+        $("#lblTime").html("");
+        app.preloader.hide();
         if(data==="0"){
             if(msg){
                 app.dialog.alert("چنین شناسه ای ثبت نشده است");
@@ -93,12 +112,14 @@ function checkAndStart(hash,msg){
                     $("#lblTime").html("مشکل در ارتباط");
             });
             socket.addEventListener('close', function (event) {
-                    $("#lblTime").html("ارتباط با سرور قطع شد");
+                    $("#lblTime").html("ارتباط درون شبکه ای برقرار نیست");
             });
         }
         else{
             myVar = setInterval(checkVersion, 500);
         }
+    }).catch(function(){
+      app.preloader.hide();  
     });
 
 }
